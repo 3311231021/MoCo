@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <script>
+    let friend1 = {
+      name: '陳大同',
+      age: 26,
+      hobbies: ['爬山', '看電影', '煮咖啡'],
+      contact: {
+        phone: '0912345678',
+        email: 'daton@example.com'
+      }
+    }
+
+    let friend2 = {
+      name: '李小明',
+      age: 20,
+      hobbies: ['跑步', '看書', '喝茶'],
+      contact: {
+        phone: '0912345680',
+        email: 'ming@example.com'
+      }
+    }
+
+    let friend3 = {
+      name: '李南西',
+      age: 40,
+      hobbies: ['睡覺', '聽音樂', '打球'],
+      contact: {
+        phone: '0912345888',
+        email: 'nancy@example.com'
+      }
+    }
+
+    // ✅ 把三個物件放進陣列中
+    let friends = [friend1, friend2, friend3];
+
+    // ✅ 正確存取資料
+    console.log(friends[1].name);            // 李小明
+    console.log(friends[0].hobbies[2]);      // 煮咖啡
+    console.log(friends[2].contact.email);   // nancy@example.com
+
+    // ✅ 修正拼字後再新增興趣
+    friends[1].hobbies.push('游泳');
+
+    console.log(friends[1].hobbies);         // ['跑步','看書','喝茶','游泳']
+  </script>
+</body>
+</html>
