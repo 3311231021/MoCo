@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>運動紀錄：地圖 + 計步器</title>
+
+    <!-- Leaflet CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet/dist/leaflet.css"
+    />
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+            background: #f5f5f5;
+        }
+
+        #map {
+            height: 300px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 8px rgba(0,0,0,0.15);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 10px;
+            border: none;
+            background: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>📱 運動紀錄（GPS + 軌跡 + 計步器）</h2>
+
+    <!-- 地圖 -->
+    <div id="map"></div>
+
+    <!-- 運動資訊卡 -->
+    <div class="card">
+        <p>🧍‍♂️ 步數：<span id="steps">0</span></p>
+        <p>📍 位置：<span id="status">等待定位中...</span></p>
+        <p>🛣️ 移動距離：<span id="distance">0</span> 公尺</p>
+    </div>
+
+    <button id="btnStart">開始運動</button>
+
+    <script>
+        // -----------------------------
+        //  1. 初始化地圖
+        // -----------------------------
+        const map = L.map("map").setView([25.033964, 121.564468], 16);
+
+        let path = []; // 儲存所有經緯度
+        let polyline = null;
+        let totalDistance = 0; // 累積距離
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: "© OpenStreetMap"
+        }).addTo(map);
+
+        let marker = L.marker([25.033964, 121.564468]).addTo(map);
+
+        // -----------------------------
+        //  2. GPS 定位與軌跡
+        // -----------------------------
+        function startGPS() {
+            if (!navigator.geolocation) {
+                alert("你的手機不支援 GPS 定位");
+                return;
+            }
+
+            navigator.geolocation.watchPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    const accuracy = pos.coords.accuracy;
+
+                    document.getElementById("status").innerText =
+                        `${lat.toFixed(6)}, ${lng.toFixed(6)}（誤差 ${accuracy}m）`;
+
+                    // 更新 Marker
+                    marker.setLatLng([lat, lng]);
+                    map.setView([lat, lng]);
+
+                    // 記錄路線
+                    path.push([lat, lng]);
+
+                    // 畫出軌跡
+                    if (polyline) map.removeLayer(polyline);
+                    polyline = L.polyline(path, { weight: 5 }).addTo(map);
+
+                    // 計算距離（只在第二點之後才算）
+                    if (path.length > 1) {
+                        const p1 = path[path.length - 2];
+                        const p2 = path[path.length - 1];
+                        const d = getDistance(p1[0], p1[1], p2[0], p2[1]);
+                        totalDistance += d;
+                        document.getElementById("distance").innerText = totalDistance.toFixed(1);
+                    }
+                },
+                (err) => {
+                    alert("GPS 錯誤：" + err.message);
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 5000
+                }
+            );
+        }
+
+        // 經緯度距離公式（haversine）
+        function getDistance(lat1, lng1, lat2, lng2) {
+            function toRad(x) {
+                return (x * Math.PI) / 180;
+            }
+            const R = 6371000;
+            const dLat = toRad(lat2 - lat1);
+            const dLng = toRad(lng2 - lng1);
+            const a =
+                Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(lat1)) *
+                    Math.cos(toRad(lat2)) *
+                    Math.sin(dLng / 2) ** 2;
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        // -----------------------------
+        //  3. 計步器（加速度感測器）
+        // -----------------------------
+        let steps = 0;
+        let lastPeak = 0;
+
+        function startPedometer() {
+            if (typeof DeviceMotionEvent.requestPermission === "function") {
+                // iPhone 需要按鈕授權
+                DeviceMotionEvent.requestPermission().then((res) => {
+                    if (res === "granted") {
+                        window.addEventListener("devicemotion", onMotion);
+                    } else {
+                        alert("你沒有允許加速度感測器");
+                    }
+                });
+            } else {
+                // Android 直接用
+                window.addEventListener("devicemotion", onMotion);
+            }
+        }
+
+        function onMotion(e) {
+            const acc = e.acceleration;
+            if (!acc) return;
+
+            const total = Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z);
+
+            if (total > 18) {  // 過門檻 → 計為一步
+                const now = Date.now();
+                if (now - lastPeak > 300) { // 防止太快連跳
+                    steps++;
+                    document.getElementById("steps").innerText = steps;
+                    lastPeak = now;
+                }
+            }
+        }
+
+        // -----------------------------
+        // 4. 按鈕開始
+        // -----------------------------
+        document.getElementById("btnStart").onclick = () => {
+            startGPS();
+            startPedometer();
+            alert("開始運動！已啟動 GPS + 計步器");
+        };
+    </script>
+</body>
+</html>
