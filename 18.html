@@ -27,7 +27,7 @@
     formElem.addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      let response = await fetch('https://httpbin.org/post', {
+      let response = await fetch('https://httpcan.org/post', {
         method: 'POST',
         body: new FormData(formElem)
       });
@@ -44,3 +44,4 @@
 </script>
 </body>
 </html>
+
