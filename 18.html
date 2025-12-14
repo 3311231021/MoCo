@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>Fetch Demo</title>
+</head>
+<body>
+  <h1>Fetch Demo</h1>
+  <div class="json-output">
+    <h3>JSON 資料格式</h3>
+    <form id="formElem">
+      <input type="text" name="name" value="Nancy">
+      <input type="text" name="surname" value="KS">
+      <input type="text" name="age" value="18">
+      <input type="submit" value="送出">
+    </form>
+    <pre id="jsonOutput"></pre>
+  </div>
+
+<script>
+  async function f_test() {
+    const formElem = document.getElementById('formElem');
+        //有async就有await
+
+    formElem.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      let response = await fetch('https://httpbin.org/post', {
+        method: 'POST',
+        body: new FormData(formElem)
+      });
+           
+      let result = await response.json();
+         
+      console.log(result);
+        
+      document.getElementById('jsonOutput').textContent = JSON.stringify(result, null, 10);
+    });
+  }
+  
+  f_test();  
+</script>
+</body>
+</html>
