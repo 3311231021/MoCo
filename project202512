@@ -62,4 +62,84 @@
     alert("已啟動 GPS 與計步功能");
   }
 
-  // ==
+  // ===== GPS 定位（行動 + 通訊）=====
+  function startGPS() {
+    navigator.geolocation.watchPosition(pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+
+      document.getElementById("pos").innerText =
+        lat.toFixed(5) + ", " + lng.toFixed(5);
+
+      const point = { lat, lng };
+      marker.setPosition(point);
+      map.setCenter(point);
+
+      path.push(point);
+      polyline.setPath(path);
+
+      if (path.length > 1) {
+        const p1 = path[path.length - 2];
+        const p2 = path[path.length - 1];
+        totalDistance += getDistance(p1, p2);
+        document.getElementById("dist").innerText =
+          totalDistance.toFixed(1);
+      }
+    });
+  }
+
+  // ===== 計算距離（Haversine）=====
+  function getDistance(a, b) {
+    const R = 6371000;
+    const dLat = (b.lat - a.lat) * Math.PI / 180;
+    const dLng = (b.lng - a.lng) * Math.PI / 180;
+    const lat1 = a.lat * Math.PI / 180;
+    const lat2 = b.lat * Math.PI / 180;
+
+    const h =
+      Math.sin(dLat/2)**2 +
+      Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)**2;
+
+    return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1-h));
+  }
+
+  // ===== 計步器（加速度感測器）=====
+  let steps = 0;
+  let lastTime = 0;
+
+  function startPedometer() {
+    if (typeof DeviceMotionEvent.requestPermission === "function") {
+      DeviceMotionEvent.requestPermission().then(res => {
+        if (res === "granted") {
+          window.addEventListener("devicemotion", countStep);
+        }
+      });
+    } else {
+      window.addEventListener("devicemotion", countStep);
+    }
+  }
+
+  function countStep(e) {
+    const acc = e.acceleration;
+    if (!acc) return;
+
+    const strength =
+      Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z);
+
+    const now = Date.now();
+    if (strength > 15 && now - lastTime > 300) {
+      steps++;
+      document.getElementById("steps").innerText = steps;
+      lastTime = now;
+    }
+  }
+</script>
+
+<script
+  src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"
+  async>
+</script>
+
+</body>
+</html>
+
