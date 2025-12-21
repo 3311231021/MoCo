@@ -10,20 +10,19 @@
   <button id="btn">啟用麥克風與相機</button>
   <video id="video" autoplay playsinline></video>
   <script>
-    const btn=document.getElementById('btn');
-    const video=document.getElementById('video');
-    btn.onclick=async()=>{
-        try{
-            const stream=await navigator.mediaDevices.getUserMedia({
-                Video:true,
-                audio:true
+    const btn = document.getElementById('btn');
+    const video = document.getElementById('video');
+    
+    btn.onclick = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: true
             });
-            video.srcobject=stream;
-
-        }
-        catch(err){
-            console.error(err)
-            alert('無法取得相機或麥克風權限')
+            video.srcObject = stream;
+        } catch (err) {
+            console.error(err);
+            alert('無法取得相機或麥克風權限');
         }
     };
   </script>
