@@ -14,7 +14,7 @@
     const video=document.getElementById('video');
     btn.onclick=async()=>{
         try{
-            const stream=await navigator.mediadevices.getUserMedia({
+            const stream=await navigator.mediaDevices.getUserMedia({
                 Video:true,
                 audio:true
             });
