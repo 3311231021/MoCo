@@ -46,7 +46,7 @@ button {
 <div id="map"></div>
 
 <div class="card">
-  <p>📍 位置：<span id="pos">定位中</span></p>
+  <p>📍 位置：<span id="pos">定位ing</span></p>
   <p>🛰️ GPS 精度：<span id="acc">--</span> m</p>
   <p>🛣️ 移動距離：<span id="dist">0</span> 公尺</p>
   <p>👣 步數：<span id="steps">0</span></p>
@@ -101,7 +101,7 @@ function startGPS() {
       document.getElementById("acc").innerText =
         accuracy.toFixed(1);
 
-      // 第一次定位
+      // 初始定位
       if (firstFix) {
         map.setView([latitude, longitude], 18);
         marker.setLatLng([latitude, longitude]);
@@ -120,12 +120,12 @@ function startGPS() {
         polyline.setLatLngs(path);
       }
 
-      // 距離計算（避免 GPS 抖動）
+      // 距離計算
       const p1 = path[path.length - 2];
       const p2 = path[path.length - 1];
       const d = calcDistance(p1, p2);
 
-      if (d < 1.5) return; // 忽略小於 1.5 公尺的漂移
+      if (d < 1.5) return; // 忽略小於 1.5 公尺的移動
 
       totalDistance += d;
       document.getElementById("dist").innerText =
