@@ -91,7 +91,7 @@ function startGPS() {
       const { latitude, longitude, accuracy } = pos.coords;
       const age = Date.now() - pos.timestamp;
 
-      if (age > 5000) return;          // 多久定位一次
+      if (age > 5000) return;          // 5 秒前的舊定位資料
       if (!firstFix && accuracy > 25) return; // 過濾低精度
 
       document.getElementById("pos").innerText =
