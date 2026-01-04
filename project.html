@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>行動運動紀錄系統（期末專案）</title>
 
+<!-- Leaflet 地圖（通訊：OpenStreetMap） -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
@@ -100,6 +101,7 @@ function startGPS() {
       document.getElementById("acc").innerText =
         accuracy.toFixed(1);
 
+      // 第一次定位
       if (firstFix) {
         map.setView([latitude, longitude], 18);
         marker.setLatLng([latitude, longitude]);
@@ -111,24 +113,35 @@ function startGPS() {
       marker.setLatLng([latitude, longitude]);
       path.push([latitude, longitude]);
 
-      // 更新路徑（不重畫）
+      // 更新移動路徑
       if (!polyline) {
         polyline = L.polyline(path, { weight: 5 }).addTo(map);
       } else {
         polyline.setLatLngs(path);
       }
 
+      // 距離計算（避免 GPS 抖動）
       const p1 = path[path.length - 2];
       const p2 = path[path.length - 1];
       const d = calcDistance(p1, p2);
 
-      if (d < 1.5) return; // 忽略 GPS 抖動
+      if (d < 1.5) return; // 忽略小於 1.5 公尺的漂移
 
       totalDistance += d;
       document.getElementById("dist").innerText =
         totalDistance.toFixed(1);
     },
-    err => alert("GPS 錯誤：" + err.message),
+    err => {
+      if (err.code === 1) {
+        alert("定位權限被拒絕，請到瀏覽器設定中允許位置存取");
+      } else if (err.code === 2) {
+        alert("無法取得定位資訊，請到戶外再試");
+      } else if (err.code === 3) {
+        alert("GPS 逾時，請稍候再試");
+      } else {
+        alert("GPS 錯誤：" + err.message);
+      }
+    },
     { enableHighAccuracy: true, timeout: 20000 }
   );
 }
@@ -147,9 +160,9 @@ function calcDistance(a, b) {
   const lat2 = toRad(b[0]);
 
   const h =
-    Math.sin(dLat/2) ** 2 +
+    Math.sin(dLat / 2) ** 2 +
     Math.cos(lat1) * Math.cos(lat2) *
-    Math.sin(dLng/2) ** 2;
+    Math.sin(dLng / 2) ** 2;
 
   return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
@@ -191,7 +204,7 @@ function onMotion(e) {
 }
 
 /* =========================================================
-   5. 開始運動（系統流程）
+   5. 系統流程：開始運動
    ========================================================= */
 
 document.getElementById("btnStart").onclick = () => {
