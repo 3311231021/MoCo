@@ -51,7 +51,7 @@ button {
 <div id="map"></div>
 
 <div class="card">
-  <p>📍 位置：<span id="pos">等待定位</span></p>
+  <p>📍 位置：<span id="pos">定位</span></p>
   <p>🛰️ GPS 精度：<span id="acc">--</span> m</p>
   <p>🛣️ 移動距離：<span id="dist">0</span> 公尺</p>
   <p>👣 步數：<span id="steps">0</span></p>
@@ -64,7 +64,7 @@ button {
    1. 地圖顯示（通訊：網路地圖服務）
    ========================================================= */
 
-const INIT_LAT = 24.136873;   // 台中火車站
+const INIT_LAT = 24.136873;   // 台中火車站定位
 const INIT_LNG = 120.685017;
 
 const map = L.map("map").setView([INIT_LAT, INIT_LNG], 16);
@@ -91,7 +91,7 @@ function startGPS() {
       const { latitude, longitude, accuracy } = pos.coords;
       const age = Date.now() - pos.timestamp;
 
-      if (age > 5000) return;          // 過濾舊資料
+      if (age > 5000) return;          // 多久定位一次
       if (!firstFix && accuracy > 25) return; // 過濾低精度
 
       document.getElementById("pos").innerText =
